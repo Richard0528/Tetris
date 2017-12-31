@@ -1,0 +1,275 @@
+/**
+ * 
+ */
+package view;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+
+import model.Board;
+import model.MovableTetrisPiece;
+import model.Point;
+
+/**
+ * 
+ * 
+ * @author richardyang
+ * @version 11.30
+ */
+public class EastPanel extends JPanel implements Observer {
+
+    /** A generated version ID for Serialization. */
+    private static final long serialVersionUID = 3457243357781833162L;
+
+    /** A default panel size. */
+    private static final Dimension DEFAULT_SIZE = new Dimension(180, 410);
+
+    /** A default font size. */
+    private static final int FONT_SIZE = 10;
+
+    /** A default width. */
+    private static final int DEFAULT_WIDTH = 180;
+
+    /** A default height for preview and score panel. */
+    private static final int DEFAULT_HEIGHT = 140;
+
+    /** A default height for control panel. */
+    private static final int DEFAULT_HEIGHT1 = 120;
+    
+    /** A game board. */
+    private final Board myBoard;
+    
+    /** A display panel. */
+    private final DisplayPanel myDisplayPanel;
+    
+    /** Tostring output of the moveabletetris piece. */
+    private String myBlock;
+
+    /** The score for score panel. */
+    private int myScore;
+    
+    /** The scoreLabel which will be updated everytime. */
+    private final JLabel myScoreLabel = new JLabel("Your score is 0");
+
+    /**
+     * Construct the east panel.
+     * @param theDisplayPanel 
+     * @param theBoard 
+     */
+    public EastPanel(final Board theBoard, final DisplayPanel theDisplayPanel) {
+        super();
+        final BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
+        myBoard = theBoard;
+        myDisplayPanel = theDisplayPanel;
+        setLayout(box);
+        setMinimumSize(DEFAULT_SIZE);
+        setBackground(Color.WHITE);
+        
+        setupPreview();
+        setupScore();
+        setupScoreDetail();
+        
+    }
+    
+    /**
+     * Set up preview panel.
+     */
+    private void setupPreview() {
+        
+        final JPanel previewPanel = new JPanel() {
+            /** .*/
+            private static final long serialVersionUID = 1603020774924136330L;
+            @Override
+            public void paintComponent(final Graphics theGraphics) {
+                super.paintComponent(theGraphics);
+                final Graphics2D g2d = (Graphics2D) theGraphics;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                     RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setPaint(Color.BLACK);
+                final int blockSize = 20;
+                final List<Point> startP = getPoint();
+                final Point start = new Point(getWidth() / 2 - 2 * blockSize, 
+                                              getHeight() / 2 - 2 * blockSize);
+                for (final Point a : startP) {
+                    g2d.fillRect(start.getX() + blockSize * a.getX(), 
+                                 start.getY() + blockSize * a.getY(), blockSize, blockSize);
+                }
+            }
+        };
+//      final int gridWSpace = (getSize().width - RGRID_WIDTH_BLOCK * blockSize) / 2;
+//      final int gridHSpace = (getSize().height - RGRID_HEIGHT_BLOCK * blockSize) / 2;
+
+        
+//      for (int i = 0; i < RGRID_HEIGHT_BLOCK + 1; i++) {
+//          final int y = gridHSpace + i * blockSize;
+//          g2d.drawLine(gridWSpace, y, getSize().width - gridWSpace, y);
+//      }
+//      for (int j = 0; j < RGRID_WIDTH_BLOCK + 1; j++) {
+//          final int x = gridWSpace + j * blockSize;
+//          g2d.drawLine(x, gridHSpace, x, getSize().height - gridHSpace);
+//      }
+      
+//      
+//      g2d.fillRect(, arg1, arg2, arg3);
+//      g2d.fillRect(, y, width, height);
+//      g2d.fillRect(, y, width, height);
+//      g2d.fillRect(x, y, width, height);
+//      
+//      
+        
+        previewPanel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+        previewPanel.setBackground(Color.WHITE);
+        final TitledBorder title1 = BorderFactory.createTitledBorder(null,
+                                      "Preview", TitledBorder.LEFT, TitledBorder.TOP);
+        previewPanel.setBorder(title1);
+        add(previewPanel);
+        
+        
+    }
+    
+    /**
+     * Set up score panel.
+     */
+    private void setupScore() {
+        final JPanel scorePanel = new JPanel();
+        scorePanel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+        scorePanel.setBackground(Color.WHITE);
+        final TitledBorder title2 = BorderFactory.createTitledBorder(null,
+                                      "Score", TitledBorder.LEFT, TitledBorder.TOP);
+        scorePanel.setBorder(title2);
+        
+        final JLabel label = new JLabel("One line for 100 points!\n"); 
+        label.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        
+        scorePanel.add(label);
+        scorePanel.add(myScoreLabel);
+        
+        add(scorePanel);
+    }
+    
+    /**
+     * Set up control panel.
+     */
+    private void setupScoreDetail() {
+        
+        final JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new GridLayout(0, 1));
+        controlPanel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT1));
+        controlPanel.setBackground(Color.WHITE);
+        final TitledBorder title3 = BorderFactory.createTitledBorder(null,
+                             "Statistics", TitledBorder.LEFT, TitledBorder.TOP);
+        controlPanel.setBorder(title3);
+        
+        final JButton start = new JButton("New Game");
+        final JButton end = new JButton("End Game");
+        final JButton help = new JButton("Help");
+        
+        start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent theA) {
+                myBoard.newGame();
+                myDisplayPanel.start();
+            }
+        });
+        
+        end.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent theA) {
+                myDisplayPanel.end();
+                myDisplayPanel.repaint();
+            }
+        });
+        
+        help.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent theB) {
+                JOptionPane.showMessageDialog(null, "Tetris \nAutumn 2017 "
+                                + "\nZhihao Yang", 
+                                null, JOptionPane.INFORMATION_MESSAGE);
+                
+            }
+        });
+        
+        
+        final Box text = Box.createVerticalBox();
+        final JLabel label1 = new JLabel("Press '\u25C0' or 'a' or 'A' to move left.");
+        label1.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        text.add(label1);
+        final JLabel label2 = new JLabel("Press '\u25B6 or 'd' or 'D' to move right.");
+        label2.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        text.add(label2);
+        final JLabel label3 = new JLabel("Press '\u25BC' or 's' or 'S' to move down.");
+        label3.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        text.add(label3);
+        final JLabel label4 = new JLabel("Press '\u25B2' or 'w' or 'W' to rotate.");
+        label4.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        text.add(label4);
+        final JLabel label5 = new JLabel("Press 'space' to drop.");
+        label5.setFont(new Font(null, Font.PLAIN, FONT_SIZE));
+        text.add(label5);
+
+        controlPanel.add(text);
+        add(controlPanel);
+    }
+
+    /**
+     * A method which gets all the start points.
+     * 
+     * @return a arraylist containing start points
+     */
+    private List<Point> getPoint() {
+        
+        if (myBlock != null) {
+            final String[] block = myBlock.split("\n");
+            final List<Point> startP = new ArrayList<>();
+
+            for (int row = 0; row < block.length; row++) {
+                final String line = block[row];
+                for (int col = 0; col < block.length; col++) {
+                    if (line.charAt(col) != ' ') {
+                        startP.add(new Point(col, row));
+                    }
+                }
+            }
+            return startP;
+        } else {
+            return new ArrayList<Point>();
+        }
+        
+    }
+    
+    @Override
+    public void update(final Observable theObj, final Object theArg) {
+        if (theArg instanceof MovableTetrisPiece) {
+            myBlock = ((MovableTetrisPiece) theArg).toString();
+        } else if (theArg instanceof Integer[]) {
+            final int addP = ((Integer[]) theArg).length;
+            myScore += addP;
+            final int score1 = 100;
+            myScoreLabel.setText("You score is " + myScore * score1);
+            
+        }
+        repaint();
+        
+    }
+    
+}

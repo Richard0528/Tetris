@@ -1,0 +1,93 @@
+/*
+ * Tetris GUI
+ */
+package view;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Observable;
+import java.util.Observer;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import model.Board;
+
+/**
+ * The GUI for Tetris.
+ * 
+ * @author richardyang
+ * @version 11.28
+ */
+public class TetrisGUI implements Observer {
+
+    /** A minimum size for the frame. */
+    private static final Dimension MIN_SIZE = new Dimension(390, 410);
+    
+    /** The top level Window for this GUI. */
+    private final JFrame myFrame;
+
+    /** The board to play with. */
+    private final Board myBoard;
+    
+    /** The display panel for game board. */
+    private final DisplayPanel myDisplayPanel;
+
+    /** The east panel. */
+    private final EastPanel myEastPanel;
+    
+    /** The control panel. */
+    private final ConfigControlPanel myControlPanel;
+    
+    /**
+     * Construct the GUI.
+     */
+    public TetrisGUI() {
+        myFrame = new JFrame("Tetris");
+        myFrame.setMinimumSize(MIN_SIZE);
+        myBoard = new Board();
+        
+        myDisplayPanel = new DisplayPanel(myBoard);
+        myEastPanel = new EastPanel(myBoard, myDisplayPanel);
+        myControlPanel = new ConfigControlPanel(myBoard, myDisplayPanel);
+        setup();
+    }
+    
+    /**
+     * Sets up the GUI.
+     */
+    public final void setup() {
+        
+        myBoard.addObserver(myEastPanel);
+        myBoard.addObserver(this);
+        myBoard.addObserver(myDisplayPanel);
+        myFrame.add(myDisplayPanel, BorderLayout.CENTER);
+        myFrame.add(myEastPanel, BorderLayout.EAST);
+        
+        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        myFrame.pack();
+        myFrame.setLocationRelativeTo(null);
+        myFrame.setVisible(true);
+        
+        myBoard.newGame();
+        myDisplayPanel.start();
+        
+    }
+    
+    @Override
+    public void update(final Observable theObj, final Object theArg) {
+        if (theArg instanceof Boolean) {
+            JOptionPane.showMessageDialog(null, "Game Over!");
+            myDisplayPanel.end();
+        }
+        
+    }
+    
+    
+    
+  
+}

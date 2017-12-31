@@ -1,0 +1,324 @@
+/*
+ * Tetris
+ */
+package view;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import model.Board;
+import model.Point;
+
+/**
+ * The display panel for Tetris.
+ * 
+ * @author richardyang
+ * @version 11.28
+ */
+public class DisplayPanel extends JPanel implements Observer {
+    
+    /** The default row number for Tetris board. */
+    public static final int ROW = 10;
+    
+    /** The default column number for Tetris board. */
+    public static final int COLUMN = 20;
+    
+    /** The default delay (in milliseconds) for the move timer. */
+    public static final int MOVE_DELAY = 240;
+    
+    /** The preferred window size. */
+    public static final Dimension PANEL_DEFAULT_SIZE = new Dimension(210, 410);
+    
+    /** Generated serial ID. */
+    private static final long serialVersionUID = 1L;
+    
+    /** The default block number for width. */
+    private static final int WIDTH_BLOCK = 10;
+    
+    /** The default block number for height. */
+    private static final int HEIGHT_BLOCK = 20;
+
+    /** The font size for "pause". */
+    private static final int FONT_SIZE = 30;
+    
+    /** Timer. */
+    private final Timer myMoveTimer;
+    
+    /** The board to play with. */
+    private final Board myBoard;
+
+    /** The boolean checks the pause status. */
+    private boolean myIsPause;
+    
+    /** The boolean checks the end game status. */
+    private boolean myIsEnd;
+
+    /** The String to display when pausing. */
+    private final String myText;
+    
+    /**
+     * Constructs a display panel.
+     * @param theBoard 
+     */
+    public DisplayPanel(final Board theBoard) {
+        super();
+        myMoveTimer = new Timer(MOVE_DELAY, new MoveListener());
+        myMoveTimer.setInitialDelay(0);
+        myBoard = theBoard;
+        myText = "Pause";
+        setUpPanel();
+        
+    }
+
+    /**
+     * Sets up the panel.
+     */
+    private void setUpPanel() {
+        addMouseListener(new MouseListener());
+        addFocusListener(new FListener());
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(final KeyEvent theEvent) {
+                if (theEvent.getKeyCode() == KeyEvent.VK_A
+                                || theEvent.getKeyCode() == KeyEvent.VK_LEFT) {
+                    myBoard.left();
+                } else if (theEvent.getKeyCode() == KeyEvent.VK_S
+                                || theEvent.getKeyCode() == KeyEvent.VK_DOWN) {
+                    myBoard.down();
+                } else if (theEvent.getKeyCode() == KeyEvent.VK_D
+                                || theEvent.getKeyCode() == KeyEvent.VK_RIGHT) {
+                    myBoard.right();
+                } else if (theEvent.getKeyCode() == KeyEvent.VK_W
+                                || theEvent.getKeyCode() == KeyEvent.VK_UP) {
+                    myBoard.rotate();
+                } else if (theEvent.getKeyCode() == KeyEvent.VK_SPACE) {
+                    myBoard.drop();
+                }
+            }
+        });
+        
+        setMinimumSize(PANEL_DEFAULT_SIZE);
+        setBackground(Color.WHITE);
+        
+    }
+    
+    @Override
+    public void paintComponent(final Graphics theGraphics) {
+        super.paintComponent(theGraphics);
+        final Graphics2D g2d = (Graphics2D) theGraphics;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                             RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        g2d.setPaint(Color.BLACK);
+        
+        if (myIsPause) {
+            setBackground(Color.BLACK);
+            final Font font = new Font(null, Font.PLAIN, FONT_SIZE);
+            g2d.setFont(font);
+            g2d.setPaint(Color.WHITE);
+            
+            final FontRenderContext renderContext = g2d.getFontRenderContext();
+            final GlyphVector glyphVector = font.createGlyphVector(renderContext, myText);
+            final Rectangle2D visualBounds = glyphVector.getVisualBounds().getBounds();
+
+            final int x =
+                (int) ((getWidth() - visualBounds.getWidth()) / 2 - visualBounds.getX());
+            final int y =
+                (int) ((getHeight() - visualBounds.getHeight()) / 2 - visualBounds.getY());
+
+            // display the text visually centered in the JPanel
+            g2d.drawString(myText, x, y);
+        } else {
+            setBackground(Color.WHITE);
+            g2d.setPaint(Color.BLACK);
+            /////////////////////////////////////////////////////////////////////////
+            //Grid
+            //        final int gridHSpace = 5;
+            //        final int blockSize = (getSize().height - 2 * gridHSpace) / 20;
+            //        final int gridWSpace = (getSize().width - WIDTH_BLOCK * blockSize) / 2;
+
+            final int blockSize = getBlockSize();
+
+
+            //        for (int i = 0; i < HEIGHT_BLOCK + 1; i++) {
+            //            final int y = gridHSpace + i * blockSize;
+            //            g2d.drawLine(gridWSpace, y, getSize().width - gridWSpace, y);
+            //        }
+            //        for (int j = 0; j < WIDTH_BLOCK + 1; j++) {
+            //            final int x = gridWSpace + j * blockSize;
+            //            g2d.drawLine(x, gridHSpace, x, getSize().height - gridHSpace);
+            //        }
+
+            //////////////////////////////////////////////////////////////////////////
+            //Piece
+            final List<Point> startP = getPoint();
+
+            // locate the start point by locating the mid point first.
+            final Point start = new Point(getWidth() / 2 - 6 * blockSize, 
+                                          getHeight() / 2 - 15 * blockSize);
+
+            // draw the rectangle boundary
+            final int widthY = 5;
+            final int widthB = 10;
+            final int heightB = 2 * widthB;
+            g2d.draw(new Rectangle2D.Double(start.getX() + blockSize, 
+                                            start.getY() + widthY * blockSize, 
+                                            widthB * blockSize, heightB * blockSize));
+
+            // loop through all the pieces
+            for (final Point a : startP) {
+                g2d.fillRect(start.getX() + blockSize * a.getX(),
+                             start.getY() + blockSize * a.getY(), blockSize, blockSize);
+            }
+        }
+        
+        
+    }
+    
+    /**
+     * A method to decide block size adapting the window size.
+     * 
+     * @return the block size
+     */
+    private int getBlockSize() {
+        final int gridSpace = 5;
+        final int blockSize;
+        if (2 * getWidth() >= getHeight()) {
+            blockSize = (getSize().height - 2 * gridSpace) / HEIGHT_BLOCK;
+        } else {
+            blockSize = (getSize().width - 2 * gridSpace) / WIDTH_BLOCK;
+        }
+        return blockSize;
+    }
+
+    /**
+     * Help function for painting pieces.
+     * 
+     * @return piece rectangle location
+     */
+    private List<Point> getPoint() {
+        
+        if (!myIsEnd) {
+            final String[] gameBoard = myBoard.toString().split("\n");
+            final ArrayList<Point> startP = new ArrayList<>();
+
+            //omit the first 5 rows.
+            final int omitRow = 5;
+            for (int row = omitRow; row < gameBoard.length; row++) {
+                final String line = gameBoard[row];
+                for (int col = 0; col < line.length(); col++) {
+                    if (line.charAt(col) != '-' && line.charAt(col) != '|' 
+                                    && line.charAt(col) != ' ') {
+                        startP.add(new Point(col, row));
+                    }
+                }
+            }
+            return startP;
+        } else {
+            return new ArrayList<Point>();
+        }
+        
+    }
+
+    /** Starts the timer. */
+    public void start() {
+        myMoveTimer.restart();
+        myIsPause = false;
+        myIsEnd = false;
+    }
+    
+    /** Stop the timer. */
+    public void stop() {
+        myMoveTimer.stop();
+        myIsPause = true;
+    }
+    
+    /** Completely stop the timer. */
+    public void end() {
+        myMoveTimer.stop();
+        myIsPause = false;
+        myIsEnd = true;
+    }
+    
+    @Override
+    public void update(final Observable theObj, final Object theArg) {
+        repaint();
+    }
+    
+    
+    
+    // *********** Inner Class Listener   *********************************
+
+    /**
+     * A class that listens for timer events and moves the shape, checking for
+     * the window boundaries and changing direction as appropriate.
+     */
+    private class MoveListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(final ActionEvent theEvent) {
+            myBoard.down();
+//            System.out.println(myBoard.toString());
+
+        }
+       
+    }
+    
+    ////////////////////////////////////////////////////////////////////////
+    // Inner class
+    /**
+     * 
+     * @author richardyang
+     *
+     */
+    private class FListener implements FocusListener {
+
+        @Override
+        public void focusGained(final FocusEvent theA) {
+            start();
+            repaint();
+        }
+
+        @Override
+        public void focusLost(final FocusEvent theB) {
+            stop();
+            repaint();
+        }
+
+    }
+
+    /**
+     * 
+     * @author richardyang
+     *
+     */
+    private class MouseListener extends MouseAdapter {
+
+        @Override
+        public void mousePressed(final MouseEvent theC) {
+            requestFocus();
+        }
+    }
+    
+}

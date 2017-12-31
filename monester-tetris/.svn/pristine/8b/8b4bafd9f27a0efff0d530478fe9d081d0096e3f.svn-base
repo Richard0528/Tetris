@@ -1,0 +1,22 @@
+/*
+ * Tetris Splash GUI
+ */
+package view;
+
+import javax.swing.JFrame;
+
+/**
+ * The GUI for Tetris Splash frame screen.
+ * 
+ * @author richardyang
+ * @version 12.6
+ */
+public class SplashGUI extends JFrame {
+    
+    
+    
+    public SplashGUI() {
+        super("Tetris");
+        
+    }
+}
